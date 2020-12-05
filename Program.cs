@@ -18,7 +18,30 @@ namespace AdventOfCode
             trees *= Day3Part1(7, 7, 1);
             trees *= Day3Part1(1, 1, 2);
             */
-            Console.WriteLine(Day4Part2());
+            Console.WriteLine(Day5(true));
+        }
+        public static int Day5(bool part2 = false)
+        {
+            var readLines = inputReader("input");
+            var scores = new List<int>();
+            var row = 0;
+            var column = 0;
+            foreach (var element in readLines)
+            {
+                row = Convert.ToInt32(element.Substring(0, 7).Replace("B", "1").Replace("F", "0"), 2);
+                column = Convert.ToInt32(element.Substring(7, 3).Replace("R", "1").Replace("L", "0"), 2);
+                scores.Add((row * 8) + column);
+            }
+            if (part2)
+            {
+                scores.Sort();
+                for (int i = 0; i < scores.Count()-1; i++)
+                {
+                    if(scores[i+1]-scores[i]!=1) return scores[i+1]-1;
+                }
+            }
+            else return scores.Max();
+            return 0;
         }
         public static List<string> Day4Helper()
         {
@@ -95,6 +118,8 @@ namespace AdventOfCode
             try
             {
                if(fields[6].Split(":").Skip(1).Any(c => !"0123456789".Contains(c)) && fields[6].Split(":")[1].Length == 9) return true;
+               //Unintentional genius, this check can only start if there's 7 items in the list, or it throws an index out of range which I catch below. Very efficient
+               //c=> !"0123456789" will return false if it's not an integer
                else return false;
             }
             catch
@@ -113,6 +138,7 @@ namespace AdventOfCode
                 workList.Sort();
                 workList.RemoveAll(x => x.Contains("cid"));
                 if (PidCheck(workList) && ByrCheck(workList) && EclCheck(workList) && EyrCheck(workList) && HclCheck(workList) && HgtCheck(workList) && IyrCheck(workList)) 
+                //Putting PidCheck() first actually turned out to make my code super efficient, it auto-rejects anything with six items
                 {
                     counter += 1; //Not all on one line for debugging purposes. Also it forgets to report one, interesting. 
                 }
