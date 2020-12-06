@@ -14,9 +14,6 @@ namespace AdventOfCode
             /*double trees = 1;
             trees *= Day3Part1(1, 1, 1);
             trees *= Day3Part1(3, 3, 1);
-            trees *= Day3Part1(5, 5, 1);
-            trees *= Day3Part1(7, 7, 1);
-            trees *= Day3Part1(1, 1, 2);
             */
             Console.WriteLine(Day6(true));
         }
