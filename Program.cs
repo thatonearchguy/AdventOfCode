@@ -18,7 +18,27 @@ namespace AdventOfCode
             trees *= Day3Part1(7, 7, 1);
             trees *= Day3Part1(1, 1, 2);
             */
-            Console.WriteLine(Day5(true));
+            Console.WriteLine(Day6(true));
+        }
+        public static int Day6(bool part2 = false)
+        {
+            var readLines = Day4Helper();
+            var questions = new List<string>();
+            var total = 0;
+            foreach (var question in readLines)
+            {
+                if(part2){
+                    questions = question.Split("\n", StringSplitOptions.RemoveEmptyEntries).ToList();
+                    foreach(var character in questions[0])
+                    {
+                        if(questions.Count(x => x.Contains(character) == true) == questions.Count()) total += 1;
+                    }
+                }
+                else{
+                    total += Regex.Replace(question, @"\s+", "").Distinct().Count();
+                }
+            }
+            return total;
         }
         public static int Day5(bool part2 = false)
         {
@@ -49,7 +69,7 @@ namespace AdventOfCode
 				"input.txt");
             var readLines = File.ReadAllText(myDocuments);
             List<string> workList = readLines.Split("\n\n").ToList();
-            for (int i = 0; i < workList.Count; i++) workList[i] = Regex.Replace(workList[i], @"\n", " ");
+            //for (var i = 0; i < workList.Count; i++) workList[i] = Regex.Replace(workList[i], @"\n", " ");
             return workList;
         }
         public static int Day4Part1()
@@ -62,7 +82,7 @@ namespace AdventOfCode
             var counter = 0;
             foreach(var element in Passports)
             {
-                workList = element.Split(" ").ToList();
+                workList = element.Split("\n", StringSplitOptions.RemoveEmptyEntries).ToList();
                 foreach(var metric in workList) foundIds.Add(metric.Substring(0, 3));
                 foundIds.Sort();
                 foundIds.Remove("cid");
