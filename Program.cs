@@ -15,7 +15,138 @@ namespace AdventOfCode
             trees *= Day3Part1(1, 1, 1);
             trees *= Day3Part1(3, 3, 1);
             */
-            Console.WriteLine(Day6(true));
+            Console.WriteLine(Day9(true));
+        }
+        public static Int64 Day9(bool part2 = false)
+        {
+            var readlines = inputReader("input");
+            var workList = new List<Int64>();
+            foreach(var element in readlines) workList.Add(Convert.ToInt64(element));
+            if(part2)
+            {
+                var sumList = new List<Int64>();
+                var skip = 0;
+                while(true)
+                {
+                    for(int i = skip; i < workList.Count(); i++)
+                    {
+                        sumList.Add(workList[i]);
+                        if (sumList.Sum()>776203571) 
+                        {
+                            skip+=1; 
+                            sumList.Clear();
+                            break;
+                        }
+                        if (sumList.Sum() == 776203571) return sumList.Max() + sumList.Min();
+                    }
+                }
+            }
+            else{
+                for (int i = 0; i < workList.Count()-25; i++)
+                {
+                    if((from n1 in workList from n2 in workList.Skip(i).Take(25) 
+                        where n1 != n2 && n1 + n2 == workList[i+24]
+                        select new {n1, n2}).Count() == 0) return workList[i+24]; 
+                }
+            }
+            return 0;
+        }
+        public static int Day8(bool part2 = false)
+        {
+            var programCounter = 0;
+            var accumulator = 0;
+            var readLines = inputReader("input");
+            for (int i = 0; i < readLines.Count(); i++) readLines[i] = Regex.Replace(readLines[i], @"\b+\b", "");
+            var seenAddresses = new List<int>();
+            var toReplace = new List<int>();
+            if(part2)
+            {
+                accumulator = 0;
+                programCounter = 0;
+                for (int i = 0; i < readLines.Count(); i++)
+                {
+                    if(String.Join("", readLines[i].Take(3))=="jmp") toReplace.Add(i);
+                    if(String.Join("", readLines[i].Take(3))=="nop") toReplace.Add(i);
+                }
+                foreach(var index in toReplace)
+                {
+                    accumulator = 0;
+                    programCounter = 0;
+                    var flipped = false;
+                    if(readLines[index].Contains("nop")) readLines[index] = "jmp " + String.Join("", readLines[index].Skip(4));
+                    else if(readLines[index].Contains("jmp")) 
+                    {
+                        readLines[index] = "nop " + String.Join("", readLines[index].Skip(4)); 
+                        flipped = true;
+                    }
+                    while(seenAddresses.Contains(programCounter)==false)
+                    {
+                        seenAddresses.Add(programCounter);
+                        if(String.Join("", readLines[programCounter].Take(3)) == "nop") programCounter+=1;
+                        if(String.Join("", readLines[programCounter].Take(3)) == "acc")
+                        {
+                            accumulator += Convert.ToInt32(String.Join("", readLines[programCounter].Skip(4))); 
+                            programCounter+=1;
+                        }
+                        if(String.Join("", readLines[programCounter].Take(3)) == "jmp") programCounter += Convert.ToInt32(String.Join("", readLines[programCounter].Skip(4))); 
+                    }
+                    seenAddresses.Clear();
+                    if(programCounter!=641 && flipped == false) readLines[index] = "nop " + String.Join("", readLines[index].Skip(4));
+                    else if (programCounter!=641 && flipped == true) readLines[index] = "jmp " + String.Join("", readLines[index].Skip(4));
+                    else break;
+                }
+            }
+            else{
+                while(seenAddresses.Contains(programCounter)==false)
+                {
+                    seenAddresses.Add(programCounter);
+                    if(String.Join("", readLines[programCounter].Take(3)) == "nop") programCounter+=1;
+                    if(String.Join("", readLines[programCounter].Take(3)) == "acc")
+                    {
+                        accumulator += Convert.ToInt32(String.Join("", readLines[programCounter].Skip(4))); 
+                        programCounter+=1;
+                    }
+                    if(String.Join("", readLines[programCounter].Take(3)) == "jmp") programCounter += Convert.ToInt32(String.Join("", readLines[programCounter].Skip(4))); 
+                }
+            }
+            return accumulator;
+        }
+        public static int Day7(bool part2 = false)
+        {
+            var readLines = inputReader("input");
+            var workList = new List<string>();
+            var discard = new List<string>{"bag", "bags", "bag,", "bags,", " contain", "bag.", "bags."};
+            var goldenColours = new List<string>();
+            var newColours = new List<string>();
+            var individualColours = new List<string>();
+            var containsColours = new List<string>();
+            var total = 0;
+            for (int i=0; i < readLines.Count(); i++) readLines[i] = Regex.Replace(string.Join(" ", readLines[i].Split(' ').Where(w => !discard.Contains(w))), @"\b contain\b", "");
+            foreach (var element in readLines)
+            {
+                if(String.Join(" ", element.Split(" ").Skip(2)).Contains("shiny gold")) 
+                {
+                    goldenColours.Add(String.Join(" ", element.Split(" ").Take(2)));
+                    total += 1;
+                }
+            }
+            foreach (var element in readLines)
+            {
+                foreach (var colour in goldenColours){
+                    if(String.Join(" ", element.Split(" ").Skip(2)).Contains(colour)) {
+                        newColours.Add(String.Join(" ", element.Split(" ").Take(2)));
+                    }
+                }
+            }
+            foreach (var element in readLines)
+            {
+                foreach (var colour in newColours){
+                    if(String.Join(" ", element.Split(" ").Skip(2)).Contains(colour)) {
+                        newColours.Add(String.Join(" ", element.Split(" ").Take(2)));
+                    }
+                }
+            }
+            return goldenColours.Count() + newColours.Distinct().Count();
         }
         public static int Day6(bool part2 = false)
         {
