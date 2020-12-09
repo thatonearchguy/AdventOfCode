@@ -11,10 +11,6 @@ namespace AdventOfCode
         
         static void Main(string[] args)
         {
-            /*double trees = 1;
-            trees *= Day3Part1(1, 1, 1);
-            trees *= Day3Part1(3, 3, 1);
-            */
             Console.WriteLine(Day9(true));
         }
         public static Int64 Day9(bool part2 = false)
