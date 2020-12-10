@@ -11,7 +11,44 @@ namespace AdventOfCode
         
         static void Main(string[] args)
         {
-            Console.WriteLine(Day9(true));
+            Console.WriteLine(Day10Part2Take2());
+        }
+        public static int Day10Part1()
+        {
+            var readlines = Day10Helper();
+            readlines.Add(0);
+            readlines.Add(readlines[readlines.Count()-1]+3);
+            var onejolt = 0;
+            var threejolt = 0;
+            for(int i = 0; i < readlines.Count()-1; i ++)
+            {
+                if(readlines[i+1]-readlines[i] == 1) onejolt += 1;
+                if(readlines[i+1]-readlines[i] == 3) threejolt += 1;
+            }
+            return onejolt * threejolt;
+        }
+        public static List<int> Day10Helper()
+        {
+            var readlines = IntegerInputReader("input");
+            var validJoltages = new List<int>{1, 2, 3};
+            var JoltageChain = new List<int>();
+            readlines.Sort();
+            readlines.Add(readlines[readlines.Count()-1]+3);
+            return readlines;
+        }
+        public static long Day10Part2Take2()
+        {
+            var readLines = Day10Helper();
+            var ways = new Dictionary<long, long>();
+            ways.Add(0, 1);
+            foreach (var line in readLines)
+            {
+                ways[line] = 0;
+                if(ways.ContainsKey(line - 1)) ways[line]+=ways[line-1];
+                if(ways.ContainsKey(line - 2)) ways[line]+=ways[line-2];
+                if(ways.ContainsKey(line - 3)) ways[line]+=ways[line-3];
+            }      
+            return ways[readLines.Max()];      
         }
         public static Int64 Day9(bool part2 = false)
         {
@@ -385,6 +422,15 @@ namespace AdventOfCode
 				$"{filename}.txt");
 			var readLines = File.ReadAllLines(myDocuments);
             return readLines.ToList(); 
+        }
+        static List<int> IntegerInputReader(string filename)
+        {
+            var myDocuments = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+				$"{filename}.txt");
+			var readLines = File.ReadAllLines(myDocuments);
+            var workList = new List<int>();
+            foreach(var element in readLines) workList.Add(Convert.ToInt32(element));
+            return workList; 
         }
     }
 }
