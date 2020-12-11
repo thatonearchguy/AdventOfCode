@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Text;
 
 namespace AdventOfCode
 {
@@ -11,7 +12,96 @@ namespace AdventOfCode
         
         static void Main(string[] args)
         {
-            Console.WriteLine(Day10Part2Take2());
+            Console.WriteLine(Day11());
+        }
+        public static void Day11ListPrinter(List<string> list)
+        {
+            var total = 0;
+            foreach(var line in list)
+            {
+                Console.WriteLine(line);
+                total += line.Count(x=>x=='#');
+            }
+            Console.WriteLine(total);
+        }
+        public static List<string> Day11ListCopy(List<string> list)
+        {
+            var returnList = new List<string>();
+            foreach (var element in list)
+            {
+                returnList.Add(element);
+            }
+            return returnList;
+        }
+        public static int Day11()
+        {
+            var freshSeats = inputReader("input");
+            var duplicateSeats = inputReader("input"); //Easiest way I could see of deep copying the input xD
+            var occupiedCounter = 0;
+            var iterationCounter = 0;
+            var Indexes = new Dictionary<List<int>, List<List<int>>>();
+            for(int i = 0; i < freshSeats.Count(); i ++)
+            {
+                for(int x = 0; x < freshSeats[i].Count(); x ++)
+                {
+                    Indexes.Add(new List<int>{i, x}, GetIndexes(x, i, freshSeats, true)); //Calls GetIndex function to find all the adjacent seats to each input. 
+                }
+            }
+            while(true){
+                freshSeats = Day11ListCopy(duplicateSeats);
+                var DictKeys = Indexes.Keys;
+                foreach(var Key in DictKeys)
+                {
+                    occupiedCounter = 0;
+                    foreach(var Seat in Indexes[Key])
+                    {
+                        if(freshSeats[Seat[0]][Seat[1]]=='#') occupiedCounter+=1;
+                    }
+                    StringBuilder line = new StringBuilder(duplicateSeats[Key[0]]);
+                    if(freshSeats[Key[0]][Key[1]]=='L' && occupiedCounter == 0) line[Key[1]]='#';
+                    if(freshSeats[Key[0]][Key[1]]=='#' && occupiedCounter >=5) line[Key[1]]='L'; //set to 4 for part 1
+                    duplicateSeats[Key[0]] = line.ToString();
+                }
+                Day11ListPrinter(duplicateSeats);
+                iterationCounter += 1;
+                if(IsEqual(freshSeats, duplicateSeats)) 
+                {
+                    Day11ListPrinter(freshSeats);
+                    return iterationCounter;
+                }
+            }
+        }
+        public static bool IsEqual(List<string> originalSeats, List<string> duplicateSeats)
+        {
+            for(int i = 0; i < originalSeats.Count(); i ++)
+            {
+                if(originalSeats[i].SequenceEqual(duplicateSeats[i])==false) return false;
+            }
+            return true;
+        }
+
+        public static List<List<int>> GetIndexes(int xIndex, int yIndex, List<string> seats, bool part2 = false)
+        {
+            var worklist = new List<int>{0, 1, 0, -1, 1, 0, -1, 0, 1, 1, -1, 1, -1, -1, 1, -1};
+            var validIndexes = new List<List<int>>();
+            for (int i = 0; i < worklist.Count(); i+=2)
+            {
+                var multiplier = 1;
+                try
+                {
+                    if(seats[yIndex+worklist[i]][xIndex+worklist[i+1]]=='L' && seats[yIndex][xIndex]=='L') //Tries to check if this is even a valid index for the specified point in the seats. 
+                    {
+                        validIndexes.Add(new List<int>{yIndex+worklist[i], xIndex+worklist[i+1]}); //Adds all valid seats that are adjacent to the specified index
+                    }
+                    if(seats[yIndex+worklist[i]][xIndex+worklist[i+1]]=='.' && seats[yIndex][xIndex]=='L'&& part2)
+                    {
+                        while(seats[yIndex+(worklist[i]*multiplier)][xIndex+(worklist[i+1]*multiplier)]=='.') multiplier += 1;
+                        validIndexes.Add(new List<int>{yIndex+(worklist[i]*multiplier), xIndex+(worklist[i+1]*multiplier)}); 
+                    }
+                }
+                catch {} //Elegantly handles cases where the index to be checked is outside of the seats. 
+            }
+            return validIndexes;
         }
         public static int Day10Part1()
         {
