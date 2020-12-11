@@ -33,33 +33,35 @@ namespace AdventOfCode
             }
             return returnList;
         }
-        public static int Day11()
+        public static int Day11(bool part2 = false)
         {
             var freshSeats = inputReader("input");
             var duplicateSeats = inputReader("input"); //Easiest way I could see of deep copying the input xD
             var occupiedCounter = 0;
-            var iterationCounter = 0;
+            var iterationCounter = 0; //Unnecessary but I was curious to see how many iterations it took to stabilise the seats.
             var Indexes = new Dictionary<List<int>, List<List<int>>>();
             for(int i = 0; i < freshSeats.Count(); i ++)
             {
                 for(int x = 0; x < freshSeats[i].Count(); x ++)
                 {
-                    Indexes.Add(new List<int>{i, x}, GetIndexes(x, i, freshSeats, true)); //Calls GetIndex function to find all the adjacent seats to each input. 
+                    Indexes.Add(new List<int>{i, x}, GetIndexes(x, i, freshSeats, part2)); 
+                    //Calls GetIndex function to find all the valid seats to consider for every index. 
                 }
             }
             while(true){
-                freshSeats = Day11ListCopy(duplicateSeats);
-                var DictKeys = Indexes.Keys;
-                foreach(var Key in DictKeys)
+                freshSeats = Day11ListCopy(duplicateSeats); //Simple function helper to deep copy a list. 
+                var DictKeys = Indexes.Keys; //Collection of every key in the dictionary, and hence every index of valid seats in the airport.
+                foreach(var Key in DictKeys) 
                 {
                     occupiedCounter = 0;
-                    foreach(var Seat in Indexes[Key])
+                    foreach(var Seat in Indexes[Key]) //Goes through the visible seats for every index. 
                     {
                         if(freshSeats[Seat[0]][Seat[1]]=='#') occupiedCounter+=1;
                     }
                     StringBuilder line = new StringBuilder(duplicateSeats[Key[0]]);
                     if(freshSeats[Key[0]][Key[1]]=='L' && occupiedCounter == 0) line[Key[1]]='#';
-                    if(freshSeats[Key[0]][Key[1]]=='#' && occupiedCounter >=5) line[Key[1]]='L'; //set to 4 for part 1
+                    if(freshSeats[Key[0]][Key[1]]=='#' && occupiedCounter >=5 && part2) line[Key[1]]='L';
+                    if(part2!=true && freshSeats[Key[0]][Key[1]]=='#' && occupiedCounter >=4) line[Key[1]]='L';
                     duplicateSeats[Key[0]] = line.ToString();
                 }
                 Day11ListPrinter(duplicateSeats);
@@ -82,20 +84,23 @@ namespace AdventOfCode
 
         public static List<List<int>> GetIndexes(int xIndex, int yIndex, List<string> seats, bool part2 = false)
         {
-            var worklist = new List<int>{0, 1, 0, -1, 1, 0, -1, 0, 1, 1, -1, 1, -1, -1, 1, -1};
+            var worklist = new List<int>{0, 1, 0, -1, 1, 0, -1, 0, 1, 1, -1, 1, -1, -1, 1, -1}; 
+            //worklist contains all the possible transformations of an index in y, x format. 
             var validIndexes = new List<List<int>>();
             for (int i = 0; i < worklist.Count(); i+=2)
             {
-                var multiplier = 1;
+                var multiplier = 1; //Multiplier for part 2
                 try
                 {
                     if(seats[yIndex+worklist[i]][xIndex+worklist[i+1]]=='L' && seats[yIndex][xIndex]=='L') //Tries to check if this is even a valid index for the specified point in the seats. 
                     {
                         validIndexes.Add(new List<int>{yIndex+worklist[i], xIndex+worklist[i+1]}); //Adds all valid seats that are adjacent to the specified index
                     }
-                    if(seats[yIndex+worklist[i]][xIndex+worklist[i+1]]=='.' && seats[yIndex][xIndex]=='L'&& part2)
+                    if(seats[yIndex+worklist[i]][xIndex+worklist[i+1]]=='.' && seats[yIndex][xIndex]=='L'&& part2) 
+                    //If it is part 2, and the located seat is a floor, it increments a multiplier which multiplies the transformation until it finds a seat, or it throws an index out of range exception. 
                     {
                         while(seats[yIndex+(worklist[i]*multiplier)][xIndex+(worklist[i+1]*multiplier)]=='.') multiplier += 1;
+                        //If a valid index is found, it is added to the 2D list, otherwise it throws an out of bounds exception which skips that transformation. 
                         validIndexes.Add(new List<int>{yIndex+(worklist[i]*multiplier), xIndex+(worklist[i+1]*multiplier)}); 
                     }
                 }
