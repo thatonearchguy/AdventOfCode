@@ -24,6 +24,7 @@ namespace AdventOfCode
         }
         public static List<int> PointRotator(List<int> coordinate, int direction)
         {
+            //Not elegant but i coded this quickly
             var newCoordinate = new List<int>();
             if(direction == 90)
             {
