@@ -12,7 +12,99 @@ namespace AdventOfCode
         
         static void Main(string[] args)
         {
-            Console.WriteLine(Day11());
+            Console.WriteLine(Day12Part2());
+        }
+        public static char DirectionToChar(int direction)
+        {
+            if(direction == 90) return 'E';
+            if(direction == 0) return 'N';
+            if(direction == 180) return 'S';
+            if(direction == 270) return 'W';
+            else return 'E';
+        }
+        public static List<int> PointRotator(List<int> coordinate, int direction)
+        {
+            var newCoordinate = new List<int>();
+            if(direction == 90)
+            {
+                newCoordinate.Add(coordinate[1]);
+                newCoordinate.Add(coordinate[0]*-1);
+            }
+            if(Math.Abs(direction) == 180)
+            {
+                newCoordinate.Add(coordinate[0]*-1);
+                newCoordinate.Add(coordinate[1]*-1);
+            }
+            if(direction == 270)
+            {
+                newCoordinate.Add(coordinate[1]*-1);
+                newCoordinate.Add(coordinate[0]);
+            }
+            if(direction == 0)
+            {
+                newCoordinate.Add(0);
+                newCoordinate.Add(0);
+            }
+            if(direction == -90) return PointRotator(coordinate, 270);
+            if(direction == -270) return PointRotator(coordinate, 90);
+            if(Math.Abs(direction)==360) return coordinate;
+            return newCoordinate;
+        } 
+        public static int Day12Part2()
+        {
+            var readlines = inputReader("input");
+            var wayPointPosition = new List<int>{10, 1};
+            var xPosition = 0;
+            var yPosition = 0;
+            var toMove = new char();
+            foreach(var line in readlines)
+            {
+                toMove = line[0];
+                if(toMove == 'F') 
+                {
+                    xPosition += wayPointPosition[0]*Convert.ToInt32(String.Join("", line.ToCharArray().Skip(1)));
+                    yPosition += wayPointPosition[1]*Convert.ToInt32(String.Join("", line.ToCharArray().Skip(1)));
+                }
+                if(toMove == 'N') wayPointPosition[1] += Convert.ToInt32(String.Join("", line.ToCharArray().Skip(1)));
+                if(toMove == 'S') wayPointPosition[1] -= Convert.ToInt32(String.Join("", line.ToCharArray().Skip(1)));
+                if(toMove == 'E') wayPointPosition[0] += Convert.ToInt32(String.Join("", line.ToCharArray().Skip(1)));
+                if(toMove == 'W') wayPointPosition[0] -= Convert.ToInt32(String.Join("", line.ToCharArray().Skip(1)));
+                if(toMove == 'R') 
+                {
+                    wayPointPosition = PointRotator(wayPointPosition, Convert.ToInt32(String.Join("", line.ToCharArray().Skip(1))));
+                }
+                if(toMove == 'L') 
+                {
+                    wayPointPosition = PointRotator(wayPointPosition, Convert.ToInt32(String.Join("", line.ToCharArray().Skip(1)))*-1);
+                } 
+            }
+            return Math.Abs(xPosition) + Math.Abs(yPosition);
+        }
+        public static int Day12Part1()
+        {
+            var readlines = inputReader("input");
+            var direction = 90;
+            var xPosition = 0;
+            var yPosition = 0;
+            var toMove = new char();
+            foreach(var line in readlines)
+            {
+                toMove = line[0];
+                if(toMove == 'F') toMove = DirectionToChar(direction);
+                if(toMove == 'N') yPosition += Convert.ToInt32(String.Join("", line.ToCharArray().Skip(1)));
+                if(toMove == 'S') yPosition -= Convert.ToInt32(String.Join("", line.ToCharArray().Skip(1)));
+                if(toMove == 'E') xPosition += Convert.ToInt32(String.Join("", line.ToCharArray().Skip(1)));
+                if(toMove == 'W') xPosition -= Convert.ToInt32(String.Join("", line.ToCharArray().Skip(1)));
+                if(toMove == 'R') 
+                {
+                    direction = mod(direction+Convert.ToInt32(String.Join("", line.ToCharArray().Skip(1))), 360);
+                }
+                if(toMove == 'L') 
+                {
+                    direction = mod(direction-Convert.ToInt32(String.Join("", line.ToCharArray().Skip(1))), 360);
+                }
+            }
+            return Math.Abs(xPosition) + Math.Abs(yPosition);
         }
         public static void Day11ListPrinter(List<string> list)
         {
