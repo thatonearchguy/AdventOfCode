@@ -15,8 +15,10 @@ namespace AdventOfCode
         {
             Console.WriteLine(Day12());
         }
-        public static bool TimeStampChecker(Dictionary<int, int> times, long timestamp)
+        public static long TimeStampGenerator(Dictionary<int, int> times)
         {
+            //This is the naive implementation of chinese remainder theorem. 
+            /*
             var workList = times.Keys.ToList();
             for (int i = 0; i < workList.Count(); i++)
             {
@@ -27,6 +29,37 @@ namespace AdventOfCode
                 if (i != 0 && workList[i] - LongMod(timestamp, workList[i]) != times[workList[i]]) return false;
             }
             return true;
+            */
+            //Here is the efficient implementation of chinese remainder theorem. 
+            long total = 1;
+            var numbers = times.Keys.ToList();
+            var remainders = times.Values.ToList();
+            var productAll = new List<long>();
+            var MMI = new List<long>();
+            long result = 0;
+            foreach(var element in numbers) total *= element;
+            foreach(var element in numbers) productAll.Add(total/element);
+            for(int i = 0; i < numbers.Count(); i ++) MMI.Add(Inverse(productAll[i], numbers[i]));
+            for(int i = 0; i < numbers.Count(); i ++) result += remainders[i] * productAll[i] * MMI[i];
+            return result%total;
+        }
+        public static long Inverse(long a, long b)
+        {
+            long m0 = b, t, quotient;
+            long x0 = 0, x1 = 1;
+            if(b==1) return 0;
+            //Extended Euclid Algorithm
+            while (a > 1)
+            {
+                quotient = a / b;
+                t = b;
+                b = a % b; a = t;
+                t = x0;
+                x0 = x1 - quotient * x0;
+                x1 = t;
+            }
+            if (x1 < 0) x1 += m0;
+            return x1;
         }
         public static long Day12()
         {
@@ -34,13 +67,11 @@ namespace AdventOfCode
             var BusTime = new Dictionary<int, int>();
             var readlines = inputReader("input");
             var BusList = readlines[1].Split(",", StringSplitOptions.RemoveEmptyEntries);
-            var timestamp = 6892381473364;
             for (int i = 0; i < BusList.Count(); i++)
             {
-                if (BusList[i] != "x") BusTime.Add(Convert.ToInt32(BusList[i]), i);
+                if (BusList[i] != "x") BusTime.Add(Convert.ToInt32(BusList[i]), i-Convert.ToInt32(BusList[i]));
             }
-            while (TimeStampChecker(BusTime, timestamp) == false) timestamp += 41;
-            return timestamp;
+            return TimeStampGenerator(BusTime);
         }
         public static int mod(int x, int m) { return (x % m + m) % m; }
         public static long LongMod(long x, long m) { return (x % m + m) % m; }
