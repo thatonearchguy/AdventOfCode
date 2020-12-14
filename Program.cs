@@ -48,7 +48,7 @@ namespace AdventOfCode
             long m0 = b, t, quotient;
             long x0 = 0, x1 = 1;
             if(b==1) return 0;
-            //Extended Euclid Algorithm
+            //Extended Euclid Algorithm to find MMI of a with respect to b
             while (a > 1)
             {
                 quotient = a / b;
