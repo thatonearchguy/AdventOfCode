@@ -16,7 +16,6 @@ namespace AdventOfCode
         {
             Console.WriteLine(Day17());
         }
-<<<<<<< HEAD
         public static long Day17()
         {
             /*
@@ -295,10 +294,6 @@ namespace AdventOfCode
         }
         public static long TimeStampGenerator(Dictionary<int, int> times)
         {
-=======
-        public static long TimeStampGenerator(Dictionary<int, int> times)
-        {
->>>>>>> bda32b9d364660f62acd82f67c533ae31725c150
             //This is the naive implementation of chinese remainder theorem. 
             /*
             var workList = times.Keys.ToList();
