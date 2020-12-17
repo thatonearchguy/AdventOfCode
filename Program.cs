@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Text;
+using System.Collections.Specialized;
 using System.Threading.Tasks;
 
 namespace AdventOfCode
@@ -13,10 +14,288 @@ namespace AdventOfCode
 
         static void Main(string[] args)
         {
-            Console.WriteLine(Day12());
+            Console.WriteLine(Day17());
         }
-        public static bool TimeStampChecker(Dictionary<int, int> times, long timestamp)
+        public static long Day17()
         {
+            /*
+            I stored a list of tuples
+            with the coordinates
+            I then generated a set of all of those coords + their neighbours
+            then I iterated through that set
+            and counted the neighbours of each cell there
+            then did logic
+            */
+            var readlines = inputReader("input");
+            var cubes = new List<Tuple<int, int, int>>(); //This will contain all the coordinates of the cubes. 
+            for(int i = 0; i < readlines.Count(); i ++)
+            {
+                for(int x = 0; x < readlines.Count(); x++)
+                {
+                    if(readlines[i][x] == '#') cubes.Add(new Tuple<int, int, int>(i, x, 0)); //Enumerating the start coordinates of the cube.
+                }
+            }
+            for(int i = 0; i < 6; i ++) cubes = Iterator(cubes);   
+            return cubes.Count();
+        }
+        public static List<Tuple<int, int, int>> Iterator(List<Tuple<int, int, int>> coordinates)
+        {
+            var cubeNeighbours = new List<Tuple<int, int, int>>();
+            var newCoordinates = new List<Tuple<int, int, int>>();
+            foreach(var element in coordinates) {newCoordinates.Add(element);} //Rudimentary deep copy.
+            foreach(var coordinate in coordinates)
+            {
+                for(int x = -1; x < 2; x ++)
+                {
+                    for(int y = -1; y < 2; y ++)
+                    {
+                        for(int z = -1; z < 2; z ++)
+                        {
+                            cubeNeighbours.Add(new Tuple<int, int, int>(coordinate.Item1+x, coordinate.Item2+y, coordinate.Item3+z)); 
+                            //These are all the possible positions adjacent to the specified cube.
+                        }
+                    }
+                }
+            }
+            foreach(var neighbour in cubeNeighbours)
+            {
+                var foundNeighbours = 0;
+                for(int x = -1; x < 2; x ++)
+                {
+                    for(int y = -1; y < 2; y ++)
+                    {
+                        for(int z = -1; z < 2; z ++)
+                        {
+                            if((x == 0 && y == 0 && z == 0) == false)
+                            {
+                                var toConsider = new Tuple<int, int, int>(neighbour.Item1+x, neighbour.Item2+y, neighbour.Item3+z);
+                                if(coordinates.Contains(toConsider)) 
+                                {
+                                    foundNeighbours+=1;
+                                }
+                            }
+                        }
+                    }
+                }
+                if(coordinates.Contains(neighbour) && (foundNeighbours==2 || foundNeighbours==3)==false) 
+                {
+                    newCoordinates.Remove(neighbour);      
+                } 
+                if(coordinates.Contains(neighbour)==false && foundNeighbours==3) 
+                {
+                    newCoordinates.Add(neighbour);
+                }
+            }
+            return newCoordinates;
+        }
+        public static long Day16(bool part2 = false)
+        {
+            var readlines = Day4Helper();
+            var total = 0;
+            long finaltotal = 1;
+            var conditions = new List<List<int>>();
+            var noteConditions = readlines[0].Split("\r\n", StringSplitOptions.RemoveEmptyEntries).ToList();
+            var toDiscard = new List<string>();
+            for(int i = 0; i < noteConditions.Count(); i ++)
+            {
+                var workList = new List<int>();
+                foreach(var element in noteConditions[i].Split(": ")[1].Split(" or "))
+                {
+                    Console.WriteLine(element);
+                    workList.Add(Convert.ToInt32(element.Split('-')[0]));
+                    workList.Add(Convert.ToInt32(element.Split('-')[1]));
+                }
+                conditions.Add(workList);
+            }
+            var tickets = readlines[2].Split("\r\n", StringSplitOptions.RemoveEmptyEntries).Skip(1).ToList();
+            for(int i = 0; i < tickets.Count(); i ++)
+            {
+                var numbers = tickets[i].Split(',', StringSplitOptions.RemoveEmptyEntries);
+                foreach(var number in numbers)
+                {
+                    if(part2 == true && TwoDListSearch(conditions, Convert.ToInt32(number))==false) toDiscard.Add(tickets[i]);
+                    if(part2 != true && TwoDListSearch(conditions, Convert.ToInt32(number))==false) total+=Convert.ToInt32(number);
+                }
+            }
+            if(part2)
+            {
+                
+                foreach(var element in toDiscard) tickets.Remove(element);
+                var ticketNums = new List<List<int>>();
+                var whichClass = new List<bool>();
+                foreach(var ticket in tickets)
+                {
+                    var workList = new List<int>();
+                    foreach(var value in ticket.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()) workList.Add(Convert.ToInt32(value));
+                    ticketNums.Add(workList);
+                }
+                var columnAllocations = new List<int>[20];
+                for(int i = 0; i < columnAllocations.Count(); i ++) columnAllocations[i] = new List<int>();
+                var conditionCounter = 0;
+                while(conditionCounter < 20)
+                {
+                    for (int i = 0; i < ticketNums[i].Count(); i++)
+                    {
+                        for(int x = 0; x < ticketNums.Count(); x ++)
+                        {
+                            whichClass.Add(WhichClass(conditions[conditionCounter], ticketNums[x][i]));
+                        }
+                        if(whichClass.Count(x=>x==true)==whichClass.Count()) 
+                        {
+                            columnAllocations[i].Add(conditionCounter);
+                            whichClass.Clear();
+                            continue;
+                        }
+                        else 
+                        {
+                            whichClass.Clear();
+                        }
+                    }
+                    conditionCounter += 1;           
+                }
+                var joeBama = new int[20];
+                for(int i = 1; i <= 20; i ++)
+                {
+                    var finalIndex = Array.FindIndex(columnAllocations, x=>x.Count() == i);
+                    foreach(var value in columnAllocations[finalIndex])
+                    {
+                        if(joeBama.Contains(value)==false)joeBama[finalIndex]=value;
+                    }
+                }
+                var myTicket = String.Join("", readlines[1].Split("\r\n", StringSplitOptions.RemoveEmptyEntries).Skip(1));
+                var myNumbers = myTicket.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                for(int i = 0; i < 6; i ++)
+                {
+                    finaltotal *= Convert.ToInt32(myNumbers[Array.FindIndex(joeBama, x=>x==i)]);
+                }
+            }
+            return finaltotal;
+        }
+        public static bool TwoDListSearch(List<List<int>> joeMama, int value)
+        {
+            foreach(var list in joeMama)
+            {
+                if(value>=list[0] && value <=list[1] || value>=list[2] && value<=list[3]) return true;
+            }
+            return false;
+        }
+        public static bool WhichClass(List<int> list, int value)
+        {
+            if(value>=list[0] && value <=list[1] || value>=list[2] && value<=list[3]) return true;
+            else return false;
+        }
+        public static int Day15Part1()
+        {
+            var readlines = new List<int>{18,8,0,5,4,1,20};
+            while(readlines.Count()!=2020)
+            {
+                var nextNum = readlines[readlines.Count()-1];
+                var instances = readlines.Count(x=>x==nextNum);
+                if(instances>1) 
+                {
+                    var indexes = Enumerable.Range(0, readlines.Count()).Where(x => readlines[x] == nextNum);
+                    readlines.Add((indexes.ElementAt(indexes.Count()-1))-(indexes.ElementAt(indexes.Count()-2)));
+                }
+                else if (instances==1) readlines.Add(0);
+            }
+            return(readlines[readlines.Count()-1]);
+        }
+        public static long Day15Part2()
+        {
+            var readlines = new List<long>{18,8,0,5,4,1,20};
+            var seenBefore = new Dictionary<long, List<long>>();
+            long counter = readlines.Count()-2;
+            long lastSpoken = 20;
+            for(int i = 0; i < readlines.Count(); i ++) seenBefore.Add(readlines[i], new List<long>{i});
+            while(counter!=29999998)
+            {
+                counter += 1;
+                int counted = seenBefore[lastSpoken].Count();
+                if(counted == 1 && seenBefore[lastSpoken][0] == counter) 
+                {
+                    seenBefore[0].Add(counter+1);
+                    lastSpoken = 0;
+                    continue;
+                }
+                else
+                {
+                    lastSpoken = seenBefore[lastSpoken][counted-1]-seenBefore[lastSpoken][counted-2];
+                    if(seenBefore.ContainsKey(lastSpoken)) seenBefore[lastSpoken].Add(counter+1);
+                    else seenBefore.Add(lastSpoken, new List<long>{counter+1});
+                    continue;
+                }
+            }
+            KeyValuePair<long, List<long>> bruh = seenBefore.Last();
+            return(seenBefore.Last().Key);
+        }
+        //My Day 14 solution seems to be extremely slow. Takes almost 8 seconds to give the answer.
+        public static List<long> AddressPermuter(string address)
+        {
+            var ToReplace = new List<int>();
+            var AddressStrings = new List<long>();
+            for(int i = 0; i < address.Length; i ++) if(address[i]=='X') ToReplace.Add(i);
+            var Permutations = new List<string>();
+            for(int i = 0; i < Math.Pow(2, ToReplace.Count()); i++) Permutations.Add(Convert.ToString(i, 2).PadLeft(ToReplace.Count(), '0'));
+            foreach(var Permutation in Permutations)
+            {
+                StringBuilder result = new StringBuilder(address);
+                for (int i = 0; i < ToReplace.Count(); i++)
+                {
+                    result[ToReplace[i]] = Permutation[i];
+                }
+                AddressStrings.Add(Convert.ToInt64(result.ToString(), 2));
+            }
+            return AddressStrings;            
+        }
+        public static Int64 Day14(bool part2 = false)
+        {
+            var readlines = inputReader("input");
+            Int64[] mem = new Int64[100000];
+            var memory = new Dictionary<long, long>();
+            var ToOverWrite = new Dictionary<Int64, char>();
+            foreach(var element in readlines)
+            {
+                if(element.Contains("mask"))
+                {
+                    ToOverWrite.Clear();
+                    for (int i = 7; i < element.Length; i++)
+                    {
+                        if(part2!=true && element[i]!='X') ToOverWrite.Add(i-7, element[i]);
+                        if(part2==true && element[i]=='X' || element[i]=='1') ToOverWrite.Add(i-7, element[i]);
+                    }
+                }
+                else
+                {
+                    if(part2)
+                    {
+                        //This code is duplicated as StringBuilders cannot be accessed outside of an if statement, and cannot access values within if statements. 
+                        var memAddress = Convert.ToString(Convert.ToInt64(String.Join("", element.Split(']').Take(1)).Substring(4)), 2).PadLeft(36, '0');
+                        var memValue = Convert.ToInt64(String.Join("", element.Split(" = ").Skip(1)));
+                        StringBuilder result = new StringBuilder(memAddress);
+                        foreach(int index in ToOverWrite.Keys) result[index] = ToOverWrite[index];
+                        foreach(var address in AddressPermuter(result.ToString()))
+                        {
+                            if(memory.Keys.ToList().Contains(address)) memory[address] = memValue;
+                            else memory.Add(address, memValue);
+                        }
+                    }
+                    else
+                    {
+                        var memAddress = Convert.ToInt64(String.Join("", element.Split(']').Take(1)).Substring(4));
+                        var memValue = Convert.ToString(Convert.ToInt64(String.Join("", element.Split(" = ").Skip(1))), 2).PadLeft(36, '0');
+                        StringBuilder result = new StringBuilder(memValue);
+                        foreach(int index in ToOverWrite.Keys) result[index] = ToOverWrite[index];
+                        mem[memAddress] = Convert.ToInt64(result.ToString(), 2);
+                    }
+                }
+            }
+            if(part2) return memory.Values.Sum();
+            else return mem.Sum();
+        }
+        public static long TimeStampGenerator(Dictionary<int, int> times)
+        {
+            //This is the naive implementation of chinese remainder theorem. 
+            /*
             var workList = times.Keys.ToList();
             for (int i = 0; i < workList.Count(); i++)
             {
@@ -27,6 +306,37 @@ namespace AdventOfCode
                 if (i != 0 && workList[i] - LongMod(timestamp, workList[i]) != times[workList[i]]) return false;
             }
             return true;
+            */
+            //Here is the efficient implementation of chinese remainder theorem. 
+            long total = 1;
+            var numbers = times.Keys.ToList();
+            var remainders = times.Values.ToList();
+            var productAll = new List<long>();
+            var MMI = new List<long>();
+            long result = 0;
+            foreach(var element in numbers) total *= element;
+            foreach(var element in numbers) productAll.Add(total/element);
+            for(int i = 0; i < numbers.Count(); i ++) MMI.Add(Inverse(productAll[i], numbers[i]));
+            for(int i = 0; i < numbers.Count(); i ++) result += remainders[i] * productAll[i] * MMI[i];
+            return result%total;
+        }
+        public static long Inverse(long a, long b)
+        {
+            long m0 = b, t, quotient;
+            long x0 = 0, x1 = 1;
+            if(b==1) return 0;
+            //Extended Euclid Algorithm to find MMI of a with respect to b
+            while (a > 1)
+            {
+                quotient = a / b;
+                t = b;
+                b = a % b; a = t;
+                t = x0;
+                x0 = x1 - quotient * x0;
+                x1 = t;
+            }
+            if (x1 < 0) x1 += m0;
+            return x1;
         }
         public static long Day12()
         {
@@ -34,13 +344,11 @@ namespace AdventOfCode
             var BusTime = new Dictionary<int, int>();
             var readlines = inputReader("input");
             var BusList = readlines[1].Split(",", StringSplitOptions.RemoveEmptyEntries);
-            var timestamp = 6892381473364;
             for (int i = 0; i < BusList.Count(); i++)
             {
-                if (BusList[i] != "x") BusTime.Add(Convert.ToInt32(BusList[i]), i);
+                if (BusList[i] != "x") BusTime.Add(Convert.ToInt32(BusList[i]), i-Convert.ToInt32(BusList[i]));
             }
-            while (TimeStampChecker(BusTime, timestamp) == false) timestamp += 41;
-            return timestamp;
+            return TimeStampGenerator(BusTime);
         }
         public static int mod(int x, int m) { return (x % m + m) % m; }
         public static long LongMod(long x, long m) { return (x % m + m) % m; }
@@ -450,7 +758,7 @@ namespace AdventOfCode
             var myDocuments = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                 "input.txt");
             var readLines = File.ReadAllText(myDocuments);
-            List<string> workList = readLines.Split("\n\n").ToList();
+            List<string> workList = readLines.Split("\r\n\r\n").ToList();
             //for (var i = 0; i < workList.Count; i++) workList[i] = Regex.Replace(workList[i], @"\n", " ");
             return workList;
         }
