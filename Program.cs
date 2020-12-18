@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Text;
-using System.Collections.Specialized;
-using System.Threading.Tasks;
 
 namespace AdventOfCode
 {
@@ -14,9 +12,188 @@ namespace AdventOfCode
 
         static void Main(string[] args)
         {
-            Console.WriteLine(Day17());
+            Console.WriteLine(Day18());
         }
-        public static long Day17()
+        public static long Evaluator(string input)
+        {
+            //1+2*3+4*5+6
+            long total = 0;
+            var evaluation = new Stack<string>();
+            var numbers = Regex.Matches(input, @"\d+").OfType<Match>().Select(m => m.Value).ToList(); 
+            var varNums = numbers.Count();
+            var operators = Regex.Replace(input, @"[\d-]", string.Empty);
+            if(operators.Count() == 0) return Convert.ToInt64(input);
+            try{
+                for(int i = 1; i <= varNums+3; i +=2) numbers.Insert(i, operators[i/2].ToString());
+            }
+            catch{};
+            for(int i = numbers.Count()-1; i > -1; i --) evaluation.Push(numbers[i]);
+            try
+            {
+                while(evaluation.Count()>0)
+                {
+                    var temp = evaluation.Pop();
+                    if(Int64.TryParse(temp, out long n))
+                    {
+                        var thing = evaluation.Pop();
+                        if(thing == "*") total += n * Convert.ToInt64(evaluation.Pop());
+                        if(thing == "+") total += n + Convert.ToInt64(evaluation.Pop());
+                    }
+                    if(temp == "*") total = total * Convert.ToInt64(evaluation.Pop());
+                    if(temp == "+") total = total + Convert.ToInt64(evaluation.Pop());
+                }
+            }
+            catch{
+                return total;
+            }
+            return total;
+        }
+        public static long EvaluatorPart2(string input)
+        {
+            //This basically acts as an interpreter for the main Evaluator function
+            var evaluation = new Stack<string>();
+            var numbers = Regex.Matches(input, @"\d+").OfType<Match>().Select(m => m.Value).ToList(); 
+            var varNums = numbers.Count();
+            var operators = Regex.Replace(input, @"[\d-]", string.Empty);
+            try{
+                for(int i = 1; i <= varNums+3; i +=2) numbers.Insert(i, operators[i/2].ToString());
+            }
+            catch{};
+            try
+            {
+                while(true)
+                {
+                    var workIndex = numbers.FindIndex(x=>x=="+");
+                    if(workIndex == -1) break;
+                    else
+                    {
+                        var result = Convert.ToString(Convert.ToInt64(numbers[workIndex+1]) + Convert.ToInt64(numbers[workIndex-1]));
+                        numbers.RemoveRange(workIndex-1, 3);
+                        numbers.Insert(workIndex-1, result);
+                    }
+                }
+            }
+            catch{
+                return Evaluator(String.Join("", numbers));
+            }
+            return Evaluator(String.Join("", numbers));
+        }
+        public static List<Tuple<int, int>> FindBrackets(string input)
+        {
+            var workList = new List<int>();
+            var bracketIndexes = new List<Tuple<int, int>>();
+            for(int i = 0; i < input.Count(); i ++)
+            {
+                if(input[i] == '(') workList.Add(i);
+                if(input[i] == ')')
+                {
+                    bracketIndexes.Add(new Tuple<int, int>(workList[workList.Count()-1], i));
+                    workList.RemoveAt(workList.Count()-1);
+                }
+            }
+            return bracketIndexes;
+        }
+
+        public static long Day18()
+        {
+            var readlines = inputReader("input");
+            long total = 0;
+            foreach(var line in readlines)
+            {
+                var bruh = new string(line.ToCharArray().Where(c => !Char.IsWhiteSpace(c)).ToArray());
+                if(bruh.Contains('(') == false) 
+                {
+                    total += EvaluatorPart2(bruh);
+                }
+                else
+                {
+                    var newString = String.Copy(bruh);
+                    while(true)
+                    {
+                        var brackets = FindBrackets(bruh);
+                        if(brackets.Count() == 0) break;
+                        var differences = new List<int>();
+                        for(int i = 0; i < brackets.Count(); i ++) differences.Add(brackets[i].Item2-brackets[i].Item1);
+                        var toSelect = differences.FindIndex(x=>x==differences.Min());  
+                        var toEvaluate = bruh.Substring(brackets[toSelect].Item1+1, differences[toSelect]-1);
+                        bruh = bruh.Remove(brackets[toSelect].Item1, differences[toSelect]+1).Insert(brackets[toSelect].Item1, EvaluatorPart2(toEvaluate).ToString());      
+                    }
+                    total += EvaluatorPart2(bruh);
+                }
+            }
+            return total;
+        }
+        public static long Day17Part2(bool part2 = false)
+        {
+            var readlines = inputReader("input");
+            var cubes = new HashSet<Tuple<int, int, int, int>>(); //This will contain all the coordinates of the cubes. 
+            for(int i = 0; i < readlines.Count(); i ++)
+            {
+                for(int x = 0; x < readlines.Count(); x++)
+                {
+                    if(readlines[i][x] == '#') cubes.Add(new Tuple<int, int, int, int>(i, x, 0, 0)); //Enumerating the start coordinates of the cube.
+                }
+            }
+            for(int i = 0; i < 6; i ++) cubes = FourDIterator(cubes);   
+            return cubes.Count();
+        }
+        public static HashSet<Tuple<int, int, int, int>> FourDIterator(HashSet<Tuple<int, int, int, int>> coordinates)
+        {
+            var cubeNeighbours = new HashSet<Tuple<int, int, int, int>>();
+            HashSet<Tuple<int, int, int, int>> newCoordinates = new HashSet<Tuple<int, int, int, int>>();
+            foreach(var element in coordinates) {newCoordinates.Add(element);} //Rudimentary deep copy.
+            foreach(var coordinate in coordinates)
+            {
+                for(int x = -1; x < 2; x ++)
+                {
+                    for(int y = -1; y < 2; y ++)
+                    {
+                        for(int z = -1; z < 2; z ++)
+                        {
+                            for(int d = -1; d < 2; d++)
+                            {
+                                cubeNeighbours.Add(new Tuple<int, int, int, int>(coordinate.Item1+x, coordinate.Item2+y, coordinate.Item3+z, coordinate.Item4+d)); 
+                                //These are all the possible positions adjacent to the specified cube.
+                            }                
+                        }
+                    }
+                }
+            }
+            foreach(var neighbour in cubeNeighbours)
+            {
+                var foundNeighbours = 0;
+                for(int x = -1; x < 2; x ++)
+                {
+                    for(int y = -1; y < 2; y ++)
+                    {
+                        for(int z = -1; z < 2; z ++)
+                        {
+                            for(int d = -1; d < 2; d++)
+                            {                           
+                                if((x == 0 && y == 0 && z == 0 && d == 0) == false)
+                                {
+                                    var toConsider = new Tuple<int, int, int, int>(neighbour.Item1+x, neighbour.Item2+y, neighbour.Item3+z, neighbour.Item4+d);
+                                    if(coordinates.Contains(toConsider)) 
+                                    {
+                                        foundNeighbours+=1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if(coordinates.Contains(neighbour) && (foundNeighbours==2 || foundNeighbours==3)==false) 
+                {
+                    newCoordinates.Remove(neighbour);      
+                } 
+                if(coordinates.Contains(neighbour)==false && foundNeighbours==3) 
+                {
+                    newCoordinates.Add(neighbour);
+                }
+            }
+            return newCoordinates;
+        }
+        public static long Day17(bool part2 = false)
         {
             /*
             I stored a list of tuples
@@ -27,7 +204,7 @@ namespace AdventOfCode
             then did logic
             */
             var readlines = inputReader("input");
-            var cubes = new List<Tuple<int, int, int>>(); //This will contain all the coordinates of the cubes. 
+            var cubes = new HashSet<Tuple<int, int, int>>(); //This will contain all the coordinates of the cubes. 
             for(int i = 0; i < readlines.Count(); i ++)
             {
                 for(int x = 0; x < readlines.Count(); x++)
@@ -38,10 +215,10 @@ namespace AdventOfCode
             for(int i = 0; i < 6; i ++) cubes = Iterator(cubes);   
             return cubes.Count();
         }
-        public static List<Tuple<int, int, int>> Iterator(List<Tuple<int, int, int>> coordinates)
+        public static HashSet<Tuple<int, int, int>> Iterator(HashSet<Tuple<int, int, int>> coordinates)
         {
-            var cubeNeighbours = new List<Tuple<int, int, int>>();
-            var newCoordinates = new List<Tuple<int, int, int>>();
+            var cubeNeighbours = new HashSet<Tuple<int, int, int>>();
+            HashSet<Tuple<int, int, int>> newCoordinates = new HashSet<Tuple<int, int, int>>();
             foreach(var element in coordinates) {newCoordinates.Add(element);} //Rudimentary deep copy.
             foreach(var coordinate in coordinates)
             {
